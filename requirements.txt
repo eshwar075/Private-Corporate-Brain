@@ -1,0 +1,9 @@
+streamlit
+langchain-groq
+langchain-community
+langchain-huggingface
+chromadb
+pypdf
+python-dotenv
+sentence-transformers
+pysqlite3-binary
