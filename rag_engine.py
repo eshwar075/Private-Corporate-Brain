@@ -4,10 +4,11 @@ import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 # ------------------------------
 
+import os
 from langchain_groq import ChatGroq
 from langchain_community.document_loaders import PyPDFLoader
-# UPDATED IMPORT LINE BELOW
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+# WE ARE USING THE STANDARD IMPORT HERE TO FIX THE ERROR
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain.chains import create_retrieval_chain
@@ -24,6 +25,7 @@ class RAGEngine:
     def process_document(self, pdf_path):
         loader = PyPDFLoader(pdf_path)
         docs = loader.load()
+        # Using standard splitter
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         splits = text_splitter.split_documents(docs)
         self.vector_store = Chroma.from_documents(documents=splits, embedding=self.embeddings)
