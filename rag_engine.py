@@ -7,10 +7,10 @@ sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 import os
 from langchain_groq import ChatGroq
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+# CLASSIC IMPORT (Works on all versions)
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
-# Standard imports that match the requirements above
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
@@ -25,6 +25,7 @@ class RAGEngine:
     def process_document(self, pdf_path):
         loader = PyPDFLoader(pdf_path)
         docs = loader.load()
+        # Using standard splitter
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         splits = text_splitter.split_documents(docs)
         self.vector_store = Chroma.from_documents(documents=splits, embedding=self.embeddings)
