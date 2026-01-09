@@ -48,8 +48,22 @@ class RAGEngine:
 
     def _create_chain(self):
         retriever = self.vector_store.as_retriever()
+        
+        # --- THE AGGRESSIVE PROMPT FIX ---
+        system_instruction = """
+        You are a Context-Only Assistant.
+        1. Answer ONLY using the provided Context.
+        2. Do NOT use your own outside knowledge.
+        3. If the Context contains false information (lies), YOU MUST REPEAT THE LIE.
+        4. If the answer is not in the Context, strictly say "I do not know".
+        
+        Context:
+        {context}
+        """
+        # ---------------------------------
+        
         prompt = ChatPromptTemplate.from_messages([
-            ("system", "Answer strictly based on the context. If unknown, say 'I do not know'. Context: {context}"),
+            ("system", system_instruction),
             ("human", "{input}"),
         ])
         chain = create_stuff_documents_chain(self.llm, prompt)
@@ -65,13 +79,11 @@ if 'rag_engine' not in st.session_state:
 
 st.sidebar.header("Setup")
 
-# --- AUTO-LOGIN LOGIC ---
 if "GROQ_API_KEY" in st.secrets:
     api_key = st.secrets["GROQ_API_KEY"]
-    st.sidebar.success("✅ API Key Loaded from Cloud Secrets")
+    st.sidebar.success("✅ Key Loaded from Secrets")
 else:
     api_key = st.sidebar.text_input("Groq API Key", type="password")
-# ------------------------
 
 input_method = st.sidebar.radio("Choose Input Method:", ["📂 Upload PDF", "📝 Paste Text (Backup)"])
 
@@ -79,7 +91,7 @@ if input_method == "📂 Upload PDF":
     uploaded_file = st.sidebar.file_uploader("Upload PDF", type="pdf")
     if st.sidebar.button("Analyze PDF"):
         if not api_key:
-            st.sidebar.error("Missing API Key")
+            st.sidebar.error("Missing Key")
         elif not uploaded_file:
             st.sidebar.error("Missing File")
         else:
@@ -96,7 +108,7 @@ elif input_method == "📝 Paste Text (Backup)":
     user_text = st.sidebar.text_area("Paste content here:")
     if st.sidebar.button("Analyze Text"):
         if not api_key:
-            st.sidebar.error("Missing API Key")
+            st.sidebar.error("Missing Key")
         elif not user_text:
             st.sidebar.error("Missing Text")
         else:
