@@ -1,38 +1,50 @@
+# --- 1. CLOUD COMPATIBILITY FIX (MUST BE AT THE VERY TOP) ---
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+# ------------------------------------------------------------
+
 import streamlit as st
 import tempfile
 import os
 from rag_engine import RAGEngine
 
-st.set_page_config(page_title="Private Brain")
+# 2. Page Config
+st.set_page_config(page_title="Private Brain", page_icon="🧠")
 st.title("🧠 Private Corporate Brain")
 
+# 3. Session State
 if 'rag_engine' not in st.session_state:
     st.session_state.rag_engine = None
 
-# --- SIDEBAR ---
-st.sidebar.header("⚙️ Configuration")
+# 4. Sidebar
+st.sidebar.header("Setup")
 api_key = st.sidebar.text_input("Groq API Key", type="password")
 uploaded_file = st.sidebar.file_uploader("Upload PDF", type="pdf")
-analyze_btn = st.sidebar.button("Analyze PDF")
+btn = st.sidebar.button("Analyze")
 
-# --- LOGIC ---
-if analyze_btn:
+# 5. Logic
+if btn:
     if not api_key:
         st.sidebar.error("⚠️ Missing API Key")
     elif not uploaded_file:
         st.sidebar.error("⚠️ Missing File")
     else:
+        # Initialize Engine
         st.session_state.rag_engine = RAGEngine(api_key)
+        
+        # Save temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(uploaded_file.read())
             path = tmp.name
         
+        # Process
         with st.spinner("Processing..."):
             status = st.session_state.rag_engine.process_document(path)
             st.sidebar.success(status)
             os.remove(path)
 
-# --- CHAT ---
+# 6. Chat Interface
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "Ready. Upload PDF to start."}]
 
