@@ -1,7 +1,11 @@
 import os
 from langchain_groq import ChatGroq
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+# --- THE CORRECT IMPORT FOR NEW VERSIONS ---
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+# -------------------------------------------
+
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain.chains import create_retrieval_chain
@@ -18,6 +22,7 @@ class RAGEngine:
     def process_document(self, pdf_path):
         loader = PyPDFLoader(pdf_path)
         docs = loader.load()
+        # Using the standard splitter
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         splits = text_splitter.split_documents(docs)
         self.vector_store = Chroma.from_documents(documents=splits, embedding=self.embeddings)
