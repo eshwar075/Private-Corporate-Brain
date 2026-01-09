@@ -1,13 +1,6 @@
-# --- CLOUD FIX FOR CHROMADB ---
-__import__('pysqlite3')
-import sys
-sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-# ------------------------------
-
 import os
 from langchain_groq import ChatGroq
 from langchain_community.document_loaders import PyPDFLoader
-# CLASSIC IMPORT (Works on all versions)
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
@@ -25,7 +18,6 @@ class RAGEngine:
     def process_document(self, pdf_path):
         loader = PyPDFLoader(pdf_path)
         docs = loader.load()
-        # Using standard splitter
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         splits = text_splitter.split_documents(docs)
         self.vector_store = Chroma.from_documents(documents=splits, embedding=self.embeddings)
