@@ -1,8 +1,10 @@
 streamlit
 langchain
+langchain-community
 langchain-groq
 langchain-huggingface
 chromadb
 pypdf
 sentence-transformers
 pysqlite3-binary
+python-dotenv
