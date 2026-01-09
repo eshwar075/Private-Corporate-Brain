@@ -17,19 +17,14 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.docstore.document import Document
 
-# --- PAGE CONFIG ---
 st.set_page_config(page_title="Private Brain", page_icon="🧠")
 st.title("🧠 Private Corporate Brain")
 
 # --- LOGIC CLASS ---
 class RAGEngine:
     def __init__(self, api_key):
-        # FIX 1: Clean the key (remove spaces)
         clean_key = api_key.strip()
-        
-        # FIX 2: Use the latest stable model
         self.llm = ChatGroq(groq_api_key=clean_key, model_name="llama-3.1-8b-instant")
-        
         self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         self.vector_store = None
         self.chain = None
@@ -69,15 +64,24 @@ if 'rag_engine' not in st.session_state:
     st.session_state.rag_engine = None
 
 st.sidebar.header("Setup")
-api_key = st.sidebar.text_input("Groq API Key", type="password")
+
+# --- AUTO-LOGIN LOGIC ---
+if "GROQ_API_KEY" in st.secrets:
+    api_key = st.secrets["GROQ_API_KEY"]
+    st.sidebar.success("✅ API Key Loaded from Cloud Secrets")
+else:
+    api_key = st.sidebar.text_input("Groq API Key", type="password")
+# ------------------------
 
 input_method = st.sidebar.radio("Choose Input Method:", ["📂 Upload PDF", "📝 Paste Text (Backup)"])
 
 if input_method == "📂 Upload PDF":
     uploaded_file = st.sidebar.file_uploader("Upload PDF", type="pdf")
     if st.sidebar.button("Analyze PDF"):
-        if not api_key or not uploaded_file:
-            st.sidebar.error("Missing Key or File")
+        if not api_key:
+            st.sidebar.error("Missing API Key")
+        elif not uploaded_file:
+            st.sidebar.error("Missing File")
         else:
             st.session_state.rag_engine = RAGEngine(api_key)
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -91,15 +95,16 @@ if input_method == "📂 Upload PDF":
 elif input_method == "📝 Paste Text (Backup)":
     user_text = st.sidebar.text_area("Paste content here:")
     if st.sidebar.button("Analyze Text"):
-        if not api_key or not user_text:
-            st.sidebar.error("Missing Key or Text")
+        if not api_key:
+            st.sidebar.error("Missing API Key")
+        elif not user_text:
+            st.sidebar.error("Missing Text")
         else:
             with st.spinner("Processing Text..."):
                 st.session_state.rag_engine = RAGEngine(api_key)
                 status = st.session_state.rag_engine.process_text(user_text)
                 st.sidebar.success(status)
 
-# --- CHAT ---
 if "messages" not in st.session_state:
     st.session_state.messages = [{"role": "assistant", "content": "Ready."}]
 
