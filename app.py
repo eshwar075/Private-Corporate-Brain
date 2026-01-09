@@ -1,8 +1,8 @@
-# --- 1. CLOUD DATABASE FIX (Keep at top) ---
+# --- 1. CLOUD DATABASE FIX ---
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-# -------------------------------------------
+# -----------------------------
 
 import streamlit as st
 import os
@@ -14,15 +14,20 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
-from langchain.chains import create_retrieval_chain
+
+# --- NEW SAFE IMPORTS (The Fix) ---
+# We point to the specific sub-folders to avoid errors
+from langchain.chains.retrieval import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
+# ----------------------------------
+
 from langchain_core.prompts import ChatPromptTemplate
 
 # --- 3. PAGE CONFIG ---
 st.set_page_config(page_title="Private Brain", page_icon="🧠")
 st.title("🧠 Private Corporate Brain")
 
-# --- 4. THE BRAIN LOGIC (Class defined inside app.py) ---
+# --- 4. THE BRAIN LOGIC ---
 class RAGEngine:
     def __init__(self, api_key):
         self.llm = ChatGroq(groq_api_key=api_key, model_name="llama3-8b-8192")
