@@ -15,7 +15,7 @@ from langchain_community.vectorstores import Chroma
 from langchain.chains.retrieval import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.docstore.document import Document # NEW IMPORT
+from langchain.docstore.document import Document
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="Private Brain", page_icon="🧠")
@@ -24,13 +24,17 @@ st.title("🧠 Private Corporate Brain")
 # --- LOGIC CLASS ---
 class RAGEngine:
     def __init__(self, api_key):
-        self.llm = ChatGroq(groq_api_key=api_key, model_name="llama3-8b-8192")
+        # FIX 1: Clean the key (remove spaces)
+        clean_key = api_key.strip()
+        
+        # FIX 2: Use the latest stable model
+        self.llm = ChatGroq(groq_api_key=clean_key, model_name="llama-3.1-8b-instant")
+        
         self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         self.vector_store = None
         self.chain = None
 
     def process_text(self, text):
-        # Create a Document object directly from text (Bypassing PDF loader)
         docs = [Document(page_content=text)]
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
         splits = text_splitter.split_documents(docs)
@@ -67,7 +71,6 @@ if 'rag_engine' not in st.session_state:
 st.sidebar.header("Setup")
 api_key = st.sidebar.text_input("Groq API Key", type="password")
 
-# --- THE FIX: TWO WAYS TO INPUT DATA ---
 input_method = st.sidebar.radio("Choose Input Method:", ["📂 Upload PDF", "📝 Paste Text (Backup)"])
 
 if input_method == "📂 Upload PDF":
@@ -86,8 +89,7 @@ if input_method == "📂 Upload PDF":
                 os.remove(path)
 
 elif input_method == "📝 Paste Text (Backup)":
-    # This is for when the Upload fails
-    user_text = st.sidebar.text_area("Paste content from your PDF here:")
+    user_text = st.sidebar.text_area("Paste content here:")
     if st.sidebar.button("Analyze Text"):
         if not api_key or not user_text:
             st.sidebar.error("Missing Key or Text")
@@ -113,7 +115,10 @@ if prompt:
     response = "⚠️ Please Analyze data first."
     if st.session_state.rag_engine:
         with st.spinner("Thinking..."):
-            response = st.session_state.rag_engine.ask(prompt)
+            try:
+                response = st.session_state.rag_engine.ask(prompt)
+            except Exception as e:
+                response = f"⚠️ Error: {str(e)}"
     
     st.chat_message("assistant").write(response)
     st.session_state.messages.append({"role": "assistant", "content": response})
